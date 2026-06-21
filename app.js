@@ -1,5 +1,9 @@
+const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
+const SUPABASE_ANON_KEY = 'TU_CLAVE_ANON_DE_SUPABASE';
+
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Referencias a elementos del DOM
     const addFriendForm = document.getElementById('add-friend-form');
     const friendNameInput = document.getElementById('friend-name');
     const logBeerForm = document.getElementById('log-beer-form');
@@ -8,50 +12,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const beerBrand = document.getElementById('beer-brand');
     const beerQty = document.getElementById('beer-qty');
     const leaderboard = document.getElementById('leaderboard');
+    
+    const btnAddFriend = document.getElementById('btn-add-friend');
+    const btnLogBeer = document.getElementById('btn-log-beer');
 
-    // Por defecto, establecer la fecha de hoy en el formulario
     beerDate.valueAsDate = new Date();
 
-    // Estructura de datos almacenada en localStorage
-    let appData = JSON.parse(localStorage.getItem('beerTrackerData')) || {};
+    // Función principal: Trae los datos de la nube y actualiza la pantalla
+    async function fetchAndRender() {
+        // Pedimos los amigos y anidamos sus registros de cervezas automáticamente
+        const { data: friends, error } = await _supabase
+            .from('friends')
+            .select('id, name, beer_logs(brand, qty)');
 
-    // Guardar datos
-    function saveData() {
-        localStorage.setItem('beerTrackerData', JSON.stringify(appData));
+        if (error) {
+            console.error('Error al obtener datos:', error);
+            leaderboard.innerHTML = '<p class="empty-state" style="color: #ff4444;">Error al conectar con la base de datos.</p>';
+            return;
+        }
+
+        updateSelect(friends);
+        updateLeaderboard(friends);
     }
 
-    // Actualizar selector de amigos
-    function updateSelect() {
+    // Actualiza el menú desplegable de selección de amigos
+    function updateSelect(friends) {
         selectFriend.innerHTML = '<option value="" disabled selected>Selecciona un amigo...</option>';
-        Object.keys(appData).forEach(name => {
+        friends.forEach(friend => {
             const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
+            option.value = friend.id; // Guardamos el ID numérico de la base de datos
+            option.textContent = friend.name;
             selectFriend.appendChild(option);
         });
     }
 
-    // Actualizar el Ranking
-    function updateLeaderboard() {
+    // Procesa los datos y dibuja el Ranking en pantalla
+    function updateLeaderboard(friends) {
         leaderboard.innerHTML = '';
-        const friends = Object.keys(appData);
 
         if (friends.length === 0) {
-            leaderboard.innerHTML = '<p class="empty-state">Aún no hay sed. ¡Añade amigos y registra cervezas!</p>';
+            leaderboard.innerHTML = '<p class="empty-state">Aún no hay amigos registrados. ¡Súmate!</p>';
             return;
         }
 
-        // Ordenar amigos por cantidad total de cervezas (mayor a menor)
-        friends.sort((a, b) => appData[b].total - appData[a].total);
-
-        friends.forEach(name => {
-            const data = appData[name];
-            // Encontrar la marca favorita (la más repetida)
+        // Mapeamos los datos para calcular totales y marcas favoritas en el frontend
+        const processedFriends = friends.map(friend => {
+            let totalBeers = 0;
             const brandCounts = {};
             let favoriteBrand = 'Ninguna';
             let maxCount = 0;
 
-            data.logs.forEach(log => {
+            friend.beer_logs.forEach(log => {
+                totalBeers += log.qty;
                 brandCounts[log.brand] = (brandCounts[log.brand] || 0) + log.qty;
                 if (brandCounts[log.brand] > maxCount) {
                     maxCount = brandCounts[log.brand];
@@ -59,57 +71,94 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            return {
+                name: friend.name,
+                total: totalBeers,
+                favoriteBrand: favoriteBrand
+            };
+        });
+
+        // Ordenamos de mayor a menor consumo de cerveza
+        processedFriends.sort((a, b) => b.total - a.total);
+
+        // Renderizamos las tarjetas
+        processedFriends.forEach(friend => {
             const item = document.createElement('div');
             item.className = 'leaderboard-item';
             item.innerHTML = `
                 <div class="friend-info">
-                    <strong>${name}</strong>
-                    <div class="friend-stats">Favorita: ${favoriteBrand}</div>
+                    <strong>${friend.name}</strong>
+                    <div class="friend-stats">Favorita: ${friend.favoriteBrand}</div>
                 </div>
-                <div class="total-beers">${data.total} 🍺</div>
+                <div class="total-beers">${friend.total} 🍺</div>
             `;
             leaderboard.appendChild(item);
         });
     }
 
-    // Evento: Agregar Amigo
-    addFriendForm.addEventListener('submit', (e) => {
+    // Evento: Agregar Amigo a Supabase
+    addFriendForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = friendNameInput.value.trim();
-        
-        if (name && !appData[name]) {
-            appData[name] = { total: 0, logs: [] };
-            saveData();
-            updateSelect();
-            updateLeaderboard();
+        if (!name) return;
+
+        btnAddFriend.disabled = true;
+        btnAddFriend.textContent = 'Guardando...';
+
+        const { error } = await _supabase
+            .from('friends')
+            .insert([{ name: name }]);
+
+        btnAddFriend.disabled = false;
+        btnAddFriend.textContent = 'Anotar';
+
+        if (error) {
+            if (error.code === '23505') {
+                alert('¡Ese nombre ya está registrado en el grupo!');
+            } else {
+                alert('Hubo un error al guardar el amigo.');
+            }
+        } else {
             friendNameInput.value = '';
-        } else if (appData[name]) {
-            alert('¡Ese amigo ya está en la lista!');
+            await fetchAndRender();
         }
     });
 
-    // Evento: Registrar Cervezas
-    logBeerForm.addEventListener('submit', (e) => {
+    // Evento: Registrar Cervezas a Supabase
+    logBeerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const name = selectFriend.value;
+        const friendId = selectFriend.value;
         const date = beerDate.value;
         const brand = beerBrand.value.trim();
         const qty = parseInt(beerQty.value);
 
-        if (name && date && brand && qty > 0) {
-            appData[name].total += qty;
-            appData[name].logs.push({ date, brand, qty });
-            
-            saveData();
-            updateLeaderboard();
-            
-            // Limpiar campos (menos el amigo y la fecha por comodidad)
+        if (!friendId || !date || !brand || qty <= 0) return;
+
+        btnLogBeer.disabled = true;
+        btnLogBeer.textContent = 'Enviando... ⏳';
+
+        const { error } = await _supabase
+            .from('beer_logs')
+            .insert([{ 
+                friend_id: friendId, 
+                date: date, 
+                brand: brand, 
+                qty: qty 
+            }]);
+
+        btnLogBeer.disabled = false;
+        btnLogBeer.textContent = '¡Salud! 🍺';
+
+        if (error) {
+            alert('Error al registrar la cerveza.');
+            console.error(error);
+        } else {
             beerBrand.value = '';
             beerQty.value = '';
+            await fetchAndRender();
         }
     });
 
-    // Inicializar la interfaz al cargar la página
-    updateSelect();
-    updateLeaderboard();
+    // Carga inicial al abrir la página
+    fetchAndRender();
 });
