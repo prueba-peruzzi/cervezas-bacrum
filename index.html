@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beer Tracker | Ranking de Amigos</title>
+    <title>Beer Tracker | Supabase Cloud</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
         <h1>🍻 Beer Tracker 2026</h1>
-        <p>¿Quién invita la próxima ronda?</p>
+        <p>Sincronizado en la nube con amigos</p>
     </header>
 
     <main class="container">
@@ -17,7 +17,7 @@
             <h2>Sumar un Amigo</h2>
             <form id="add-friend-form">
                 <input type="text" id="friend-name" placeholder="Nombre (ej. Juan)" required>
-                <button type="submit" class="btn-primary">Anotar</button>
+                <button type="submit" id="btn-add-friend" class="btn-primary">Anotar</button>
             </form>
         </section>
 
@@ -25,25 +25,26 @@
             <h2>Registrar Cervezas</h2>
             <form id="log-beer-form">
                 <select id="select-friend" required>
-                    <option value="" disabled selected>Selecciona un amigo...</option>
-                    </select>
+                    <option value="" disabled selected>Cargando amigos...</option>
+                </select>
                 
                 <input type="date" id="beer-date" required>
                 <input type="text" id="beer-brand" placeholder="Marca (ej. Patagonia, IPA artesanal)" required>
                 <input type="number" id="beer-qty" placeholder="Cantidad (ej. 2)" min="1" required>
                 
-                <button type="submit" class="btn-secondary">¡Salud! 🍺</button>
+                <button type="submit" id="btn-log-beer" class="btn-secondary">¡Salud! 🍺</button>
             </form>
         </section>
 
         <section class="card">
             <h2>Ranking Anual</h2>
             <div id="leaderboard" class="leaderboard-container">
-                <p class="empty-state">Aún no hay sed. ¡Añade amigos y registra cervezas!</p>
+                <p class="empty-state">Conectando con la base de datos...</p>
             </div>
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 </html>
