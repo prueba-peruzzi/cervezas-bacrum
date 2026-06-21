@@ -1,0 +1,132 @@
+:root {
+    --bg-color: #1a1a1a;
+    --card-bg: #2a2a2a;
+    --text-main: #f5f5f5;
+    --text-muted: #aaaaaa;
+    --primary: #f5a623; /* Tono cerveza rubia */
+    --primary-hover: #e09313;
+    --secondary: #e67e22; /* Tono cerveza roja */
+    --secondary-hover: #d35400;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.6;
+    padding-bottom: 2rem;
+}
+
+header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: linear-gradient(180deg, #111 0%, var(--bg-color) 100%);
+    border-bottom: 2px solid var(--primary);
+}
+
+h1 {
+    color: var(--primary);
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.card h2 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    border-bottom: 1px solid #444;
+    padding-bottom: 0.5rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+input, select {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background-color: #333;
+    color: var(--text-main);
+    font-size: 1rem;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+button {
+    padding: 0.8rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    color: #fff;
+}
+
+.btn-primary { background-color: var(--primary); color: #111; }
+.btn-primary:hover { background-color: var(--primary-hover); }
+
+.btn-secondary { background-color: var(--secondary); }
+.btn-secondary:hover { background-color: var(--secondary-hover); }
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid var(--primary);
+}
+
+.friend-info strong {
+    font-size: 1.2rem;
+    display: block;
+}
+
+.friend-stats {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.total-beers {
+    background-color: var(--primary);
+    color: #111;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+}
